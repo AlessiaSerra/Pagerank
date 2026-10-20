@@ -1,0 +1,142 @@
+clear;
+close all;
+clc;
+
+%% INPUT
+fprintf('Mode selection:\n');
+fprintf('1) Dataset "hollins.dat"\n');
+fprintf('2) Test matrix 4x4\n');
+fprintf('3) Test matrix 5x5\n')
+choice = input('Insert 1, 2 or 3: ');
+
+if choice == 1
+    %% INPUT DATASET
+    filename = 'hollins.dat';
+    N = 6012; 
+    B = AdjacencyMatrix(filename, N);
+elseif choice == 2
+    B = [0, 1, 1, 1;
+         0, 0, 1, 1;
+         1, 0, 0, 0;
+         1, 0, 1, 0]';
+    N = size(B, 1);
+elseif choice == 3
+    B = [ 0 1 0 0 0 ;
+       1 0 0 0 0 ;
+       0 0 0 1 0 ;
+       0 0 1 0 0 ;
+       0 0 1 1 0 ]';
+
+    N = size(B,1);
+else
+    error('Option not valid.');
+end
+
+%% Build A 
+[A, n, dangling_mask, s] = buildStochasticMatrixA(B);
+
+%% PageRank parameters
+m = 0.15;          
+d = 1 - m;
+
+tol = 1e-6;
+max_iter = 1000;
+x = ones(N, 1) / N;
+
+%% POWER METHOD 
+[count, rel_err, x] = pagerankPowerMethod(A, x, d, m, s, dangling_mask, tol, max_iter);
+
+%% Printing results 
+if choice == 2 || choice == 3
+    % For the 4x4 matrix print all the nodes
+    printTopK(x, N);
+else
+    % For hollins dataset print only the first 10 nodes
+    printTopK(x, 10);
+end
+
+
+%checkPageRank(A, x, d, m, s, dangling_mask);
+
+%% Convergence info
+if rel_err <= tol
+    fprintf('Convergence in %d iterations.\n', count);
+else
+    fprintf('Max iter reached without convergence.\n');
+end
+
+
+function B = AdjacencyMatrix(filename, N)
+    B_temp = readmatrix(filename, 'HeaderLines', N+1);
+    sourcesNodes = B_temp(:, 1);
+    destinationNodes = B_temp(:, 2);
+    % B(i,j)=1 if j -> i (column = source, row = destination)
+    B = sparse(destinationNodes, sourcesNodes, 1, N, N);
+end
+
+
+function [A, n, dangling_mask, s] = buildStochasticMatrixA(B)
+% Build column-stochastic matrix A from adjacency B.
+
+    num_pages = size(B, 1);
+    n = sum(B, 1);              
+    dangling_mask = (n == 0);
+
+    invn = zeros(num_pages, 1);  %standardization
+    invn(~dangling_mask) = 1 ./ n(~dangling_mask);
+
+    A = B * spdiags(invn, 0, num_pages, num_pages);
+    s = ones(num_pages, 1) / num_pages;
+end
+
+
+function [count, rel_err, x] = pagerankPowerMethod(A, x, d, m, s, dangling_mask, tol, max_iter)
+% link + dangling + teleport
+
+    count = 0;
+    rel_err = inf;
+
+    dangling_idx = dangling_mask;
+
+    while (count < max_iter)
+        count = count + 1;
+        x_old = x;
+        
+        link_contribution = d * (A * x);  %  handling direct links
+       
+        sum_dangling = sum(x(dangling_idx));   % handling dangling nodes
+        dangling_contribution = (d * sum_dangling) * s;
+
+        teleport_contribution = m * s;   % teleport contribution
+
+        x = link_contribution + dangling_contribution + teleport_contribution; %x = Gx
+
+        rel_err = norm(x - x_old) / norm(x);
+        if rel_err < tol
+            break
+        end
+    end
+end
+
+
+function printTopK(x, K)
+
+    [scores_sorted, idx] = sort(x, 'descend');
+
+    fprintf('\nTop %d pages for PageRank:\n', K);
+    for i = 1:K
+        fprintf('Position %d: Node %d (Score: %.8f)\n', i, idx(i), scores_sorted(i));
+    end
+end
+
+
+function checkPageRank(A, x, d, m, s, dangling_mask)
+    if abs(sum(x) - 1) > 1e-6
+        warning('Warning: The final vector does not sum to 1!!');
+    else
+        disp('The sum of the PageRank vector is 1 (Correct).');
+        dangling_idx = dangling_mask;
+        Gx = d*(A*x) + (d*sum(x(dangling_idx)))*s + m*s;
+        fprintf('Rayleigh quotient = %.4f\n', (x' * Gx) / (x' * x));
+    end
+end
