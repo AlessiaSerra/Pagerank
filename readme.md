@@ -6,6 +6,8 @@ This repository contains a MATLAB implementation of the PageRank algorithm using
 
 *   `pagerank.m`: The main MATLAB script that executes the PageRank algorithm.
 *   `hollins.dat`: A text-based dataset containing 6,012 nodes and 23,875 edges, where the first line specifies the dimensions, the following lines map node indices to URLs, and the final section contains the edge list (source to destination).
+*    `PageRank.pdf`: A report explaining Computational Algebra behind PageRank.
+            
 
 ## Features
 
