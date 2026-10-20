@@ -4,7 +4,7 @@ This repository contains a MATLAB implementation of the PageRank algorithm using
 
 ## Files Included
 
-*   `pagerank_finale.m`: The main MATLAB script that executes the PageRank algorithm.
+*   `pagerank.m`: The main MATLAB script that executes the PageRank algorithm.
 *   `hollins.dat`: A text-based dataset containing 6,012 nodes and 23,875 edges, where the first line specifies the dimensions, the following lines map node indices to URLs, and the final section contains the edge list (source to destination).
 
 ## Features
@@ -27,7 +27,7 @@ The algorithm uses the following predefined parameters to control the Power Meth
 
 ## Usage Instructions
 
-1. Ensure both `pagerank_finale.m` and `hollins.dat` are located in the same working directory.
+1. Ensure both `pagerank.m` and `hollins.dat` are located in the same working directory.
 2. Run the `pagerank_finale.m` script in MATLAB.
 3. When prompted in the console, input `1` to run the algorithm on the Hollins University dataset, `2` for the 4x4 matrix, or `3` for the 5x5 matrix.
 4. The console will display the top ranked nodes with their specific PageRank scores, followed by a message indicating how many iterations were required to achieve convergence.
